@@ -1,5 +1,4 @@
-import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from app.services.scoring_engine import calculate_stress_score, calculate_burnout_risk
 
 def test_calculate_stress_score():
@@ -27,7 +26,7 @@ def test_calculate_burnout_risk_cold_start():
     assert brs["exhaustion_risk"] in ["Low", "Medium", "High"]
 
 def test_calculate_burnout_risk_active_logs():
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     # Mock journals showing increasing negativity
     journals = [
         {"created_at": now - timedelta(days=5), "sentiment_polarity": 0.5},
