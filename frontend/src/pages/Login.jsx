@@ -14,6 +14,11 @@ export default function Login() {
   
   const navigate = useNavigate();
 
+  function fillDemoCredentials() {
+    setEmail("test@mail.com");
+    setPassword("123456");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -50,7 +55,7 @@ export default function Login() {
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-purple-950/20 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="w-full max-w-md glass-panel p-8 rounded-2xl relative z-10">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex p-3 bg-indigo-500/10 rounded-xl mb-3 border border-indigo-500/20 animate-pulse">
             <Activity className="w-8 h-8 text-indigo-400" />
           </div>
@@ -60,6 +65,21 @@ export default function Login() {
           <p className="text-slate-400 text-sm mt-2">
             Predictive Mental Wellness Intelligence
           </p>
+        </div>
+
+        {/* Demo Credentials Prefill Card */}
+        <div className="mb-5 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs flex justify-between items-center text-slate-300">
+          <div>
+            <div className="font-semibold text-slate-200">Quick Testing Accounts</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Email: test@mail.com | Pass: 123456</div>
+          </div>
+          <button 
+            type="button"
+            onClick={fillDemoCredentials}
+            className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-bold cursor-pointer transition duration-150"
+          >
+            Fill Demo
+          </button>
         </div>
 
         {error && (
