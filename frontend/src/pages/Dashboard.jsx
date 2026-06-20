@@ -357,7 +357,7 @@ export default function Dashboard() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {recommendations?.map((rec, idx) => (
+          {Array.isArray(recommendations) && recommendations.map((rec, idx) => (
             <div key={idx} className="p-5 rounded-xl border border-slate-800/80 bg-slate-900/30 flex flex-col justify-between gap-5 relative overflow-hidden">
               
               {/* Highlight personalized ones */}
@@ -398,7 +398,7 @@ export default function Dashboard() {
             </div>
           ))}
 
-          {(!recommendations || recommendations.length === 0) && (
+          {(!Array.isArray(recommendations) || recommendations.length === 0) && (
             <div className="md:col-span-3 text-center py-10 text-xs text-slate-500 italic">
               No recommendations generated. Complete onboarding and submit journal entries to populate.
             </div>
@@ -416,7 +416,7 @@ export default function Dashboard() {
           </h2>
           
           <div className="flex-grow overflow-y-auto pr-1 space-y-3">
-            {sessions.map((session) => (
+            {Array.isArray(sessions) && sessions.map((session) => (
               <div 
                 key={session.id} 
                 className="p-4 rounded-xl border border-slate-800 bg-slate-900/30 flex justify-between items-center hover:border-slate-700 transition"
@@ -439,7 +439,7 @@ export default function Dashboard() {
                 </button>
               </div>
             ))}
-            {sessions.length === 0 && (
+            {(!Array.isArray(sessions) || sessions.length === 0) && (
               <div className="h-full flex items-center justify-center text-xs text-slate-500 italic">
                 No active chat sessions found. Start a conversation in Aarohi Chat to log history.
               </div>
