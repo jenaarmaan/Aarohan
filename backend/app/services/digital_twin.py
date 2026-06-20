@@ -223,8 +223,23 @@ def compile_user_analytics(user_id: str) -> dict:
             }
             
         # 2. Run deterministic algorithms
-        avg_stress = 50.0
-        avg_mood = 5.0
+        if not journals and not moods:
+            analytics_data = {
+                "user_id": user_id,
+                "avg_stress": None,
+                "avg_mood": None,
+                "current_burnout_score": None,
+                "current_crisis_level": 0,
+                "top_triggers": [],
+                "recent_timeline": [],
+                "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
+            }
+            db.collection("user_analytics").document(user_id).set(analytics_data)
+            logger.info(f"Compiled empty user analytics cached card for user {user_id}")
+            return analytics_data
+
+        avg_stress = 0.0
+        avg_mood = 0.0
         
         if moods:
             avg_stress_log = sum(m.get("stress_score", 5.0) for m in moods) / len(moods)
@@ -232,24 +247,26 @@ def compile_user_analytics(user_id: str) -> dict:
             avg_mood = sum(m.get("mood_score", 5.0) for m in moods) / len(moods)
             
         brs_data = calculate_burnout_risk(journals, moods, triggers, baseline_survey)
-        brs_score = brs_data.get("burnout_probability", 50.0)
+        brs_score = brs_data.get("burnout_probability", 0.0)
         
-        # 3. Determine Crisis Level (1-4)
-        crisis_level = 1
-        if avg_stress > 70.0:
+        # 3. Determine Crisis Level (0-4)
+        crisis_level = 0
+        if moods or journals:
             crisis_level = 1
-        if brs_score > 70.0:
-            crisis_level = 2
-        if brs_score > 85.0:
-            crisis_level = 3
-            
-        # Check if any recent journal has self-harm flag
-        recent_journals = sorted(journals, key=lambda x: x.get("created_at", datetime.min))[-3:]
-        for j in recent_journals:
-            # We check if self-harm was flagged by Gemini in any recent entries
-            if j.get("self_harm_detected", False):
-                crisis_level = 4
-                break
+            if avg_stress > 70.0:
+                crisis_level = 1
+            if brs_score > 70.0:
+                crisis_level = 2
+            if brs_score > 85.0:
+                crisis_level = 3
+                
+            # Check if any recent journal has self-harm flag
+            recent_journals = sorted(journals, key=lambda x: x.get("created_at", datetime.min))[-3:]
+            for j in recent_journals:
+                # We check if self-harm was flagged by Gemini in any recent entries
+                if j.get("self_harm_detected", False):
+                    crisis_level = 4
+                    break
                 
         # 4. Generate 30-Day Timeline items
         timeline = []
@@ -281,8 +298,8 @@ def compile_user_analytics(user_id: str) -> dict:
         # 5. Write to user_analytics collection
         analytics_data = {
             "user_id": user_id,
-            "avg_stress": round(avg_stress, 2),
-            "avg_mood": round(avg_mood, 2),
+            "avg_stress": round(avg_stress, 2) if avg_stress is not None else None,
+            "avg_mood": round(avg_mood, 2) if avg_mood is not None else None,
             "current_burnout_score": brs_score,
             "current_crisis_level": crisis_level,
             "top_triggers": top_triggers_mapped,

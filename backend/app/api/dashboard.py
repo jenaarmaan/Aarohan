@@ -37,3 +37,37 @@ def get_dashboard_data(user_id: str = Depends(get_current_user)):
             status_code=500,
             detail=f"Failed to fetch dashboard data: {e}"
         )
+
+@router.delete("/reset", status_code=204)
+def reset_dashboard_data(user_id: str = Depends(get_current_user)):
+    """
+    Resets the user's dashboard by deleting all user check-in data, journals, trigger analyses,
+    emotion events, wellness memory outcomes, chat sessions, chat messages, and user analytics cache.
+    """
+    try:
+        collections_to_clear = [
+            "journal_entries",
+            "mood_entries",
+            "emotion_events",
+            "trigger_events",
+            "burnout_scores",
+            "outcome_events",
+            "wellness_memory",
+            "chat_sessions",
+            "chat_messages",
+            "user_analytics"
+        ]
+        
+        batch = db.batch()
+        for col_name in collections_to_clear:
+            docs = db.collection(col_name).where("user_id", "==", user_id).get()
+            for doc in docs:
+                batch.delete(doc.reference)
+                
+        batch.commit()
+        return
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reset dashboard: {e}"
+        )

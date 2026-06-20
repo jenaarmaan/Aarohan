@@ -38,7 +38,7 @@ export default function Login() {
         navigate("/onboarding"); // Direct to onboarding wizard first
       } else {
         await login(email, password);
-        navigate("/dashboard"); // Direct to wellness dashboard
+        navigate("/"); // Return to home page
       }
     } catch (err) {
       console.error(err);

@@ -44,6 +44,23 @@ def calculate_burnout_risk(
         + 0.10 * TriggerIntensity
     """
     
+    # Return absolute zeros if no user data exists
+    if not journal_entries and not mood_entries and not baseline_survey:
+        return {
+            "burnout_probability": 0.0,
+            "exhaustion_risk": "Low",
+            "motivation_decline": False,
+            "confidence": 0.0,
+            "temporal_metrics": {
+                "sentiment_trend_slope": 0.0,
+                "stress_growth_rate": 0.0,
+                "recovery_delay": 0.0,
+                "emotional_volatility": 0.0,
+                "engagement_drop": 0.0,
+                "trigger_intensity": 0.0
+            }
+        }
+
     # 1. NegativeTrend (0-100)
     # Slope of journal sentiment polarity over the last 10 entries.
     negative_trend = 50.0  # Default baseline

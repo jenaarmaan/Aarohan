@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area 
 } from "recharts";
 import { 
   ShieldAlert, Sparkles, TrendingUp, AlertCircle, RefreshCw, 
-  HelpCircle, Compass, HeartHandshake, Eye, CheckCircle2 
+  HelpCircle, Compass, HeartHandshake, Eye, CheckCircle2, Trash2, LogOut
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -14,9 +16,16 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [submittingFeedback, setSubmittingFeedback] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
+  const [sessions, setSessions] = useState([]);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
+  const [resetting, setResetting] = useState(false);
+
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
+    fetchChatSessions();
   }, []);
 
   async function fetchDashboardData() {
@@ -30,6 +39,60 @@ export default function Dashboard() {
       setError("Failed to load dashboard metrics. Check server connection.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchChatSessions() {
+    try {
+      const res = await api.get("/chat/sessions");
+      setSessions(res.data);
+    } catch (err) {
+      console.error("Failed to load chat sessions:", err);
+    }
+  }
+
+  async function handleDeleteSession(sessionId) {
+    if (!window.confirm("Are you sure you want to delete this chat session? This cannot be undone.")) return;
+    setDeletingSessionId(sessionId);
+    try {
+      await api.delete(`/chat/sessions/${sessionId}`);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSuccessMsg("Chat session deleted successfully.");
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete chat session.");
+    } finally {
+      setDeletingSessionId(null);
+    }
+  }
+
+  async function handleResetDashboard() {
+    if (!window.confirm("WARNING: This will permanently delete all your check-ins, journal entries, active triggers, chat sessions, and memory data. This will reset your dashboard back to a fresh state. Are you sure you want to proceed?")) return;
+    setResetting(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await api.delete("/dashboard/reset");
+      setSuccessMsg("Dashboard has been reset successfully. All logs deleted.");
+      // Reload dashboard data (will compile empty state)
+      await fetchDashboardData();
+      // Reload sessions list
+      await fetchChatSessions();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to reset dashboard data.");
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await logout();
+      navigate("/");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      setError("Failed to sign out.");
     }
   }
 
@@ -87,12 +150,13 @@ export default function Dashboard() {
   }
 
   const { analytics, recommendations } = data;
-  const crisisLevel = analytics?.current_crisis_level || 1;
+  const crisisLevel = analytics?.current_crisis_level || 0;
+  const hasLogs = analytics?.recent_timeline && analytics.recent_timeline.length > 0;
 
   // Visual helper for BRS score styling
   const brs = analytics?.current_burnout_score || 0;
-  const brsColor = brs > 75 ? "text-rose-400" : brs > 40 ? "text-amber-400" : "text-emerald-400";
-  const brsColorBg = brs > 75 ? "bg-rose-500/10 border-rose-500/20" : brs > 40 ? "bg-amber-500/10 border-amber-500/20" : "bg-emerald-500/10 border-emerald-500/20";
+  const brsColor = !hasLogs ? "text-slate-400" : brs > 75 ? "text-rose-400" : brs > 40 ? "text-amber-400" : "text-emerald-400";
+  const brsColorBg = !hasLogs ? "bg-slate-500/5 border-slate-500/10" : brs > 75 ? "bg-rose-500/10 border-rose-500/20" : brs > 40 ? "bg-amber-500/10 border-amber-500/20" : "bg-emerald-500/10 border-emerald-500/20";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
@@ -103,12 +167,20 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold tracking-tight">Wellness Digital Twin</h1>
           <p className="text-slate-400 text-xs mt-1">Real-time mental wellness analytics updated asynchronously.</p>
         </div>
-        <button 
-          onClick={fetchDashboardData}
-          className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition cursor-pointer flex items-center gap-2 text-xs font-semibold text-slate-300"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchDashboardData}
+            className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition cursor-pointer flex items-center gap-2 text-xs font-semibold text-slate-300"
+          >
+            <RefreshCw className="w-4 h-4" /> Refresh
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:bg-rose-500/5 hover:border-rose-500/20 hover:text-rose-400 transition cursor-pointer flex items-center gap-2 text-xs font-semibold text-slate-300"
+          >
+            <LogOut className="w-4 h-4" /> Log Out
+          </button>
+        </div>
       </div>
 
       {successMsg && (
@@ -118,7 +190,7 @@ export default function Dashboard() {
       )}
 
       {/* Safety / Crisis alerts */}
-      {crisisLevel >= 3 && (
+      {hasLogs && crisisLevel >= 3 && (
         <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-4">
           <ShieldAlert className="w-6 h-6 text-rose-400 flex-shrink-0 mt-0.5 animate-pulse" />
           <div className="space-y-1">
@@ -141,12 +213,12 @@ export default function Dashboard() {
               <TrendingUp className="w-4 h-4 text-indigo-400" />
             </div>
             <div className={`text-4xl font-extrabold tracking-tight mt-3 ${brsColor}`}>
-              {brs}%
+              {hasLogs && brs !== null && brs !== undefined ? `${brs}%` : "Nill"}
             </div>
           </div>
           <div className="text-xs text-slate-500 flex justify-between items-center">
             <span>Prediction Confidence</span>
-            <span className="font-semibold text-slate-300">92%</span>
+            <span className="font-semibold text-slate-300">{hasLogs ? `${Math.round((analytics?.confidence || 0) * 100)}%` : "Nill"}</span>
           </div>
         </div>
 
@@ -158,7 +230,7 @@ export default function Dashboard() {
               <Compass className="w-4 h-4 text-indigo-400" />
             </div>
             <div className="text-4xl font-extrabold tracking-tight mt-3 text-slate-200">
-              {analytics?.avg_stress ? `${analytics.avg_stress}%` : "30%"}
+              {hasLogs && analytics?.avg_stress !== null && analytics?.avg_stress !== undefined ? `${analytics.avg_stress.toFixed(0)}%` : "Nill"}
             </div>
           </div>
           <div className="text-xs text-slate-500">
@@ -174,7 +246,7 @@ export default function Dashboard() {
               <HeartHandshake className="w-4 h-4 text-indigo-400" />
             </div>
             <div className="text-4xl font-extrabold tracking-tight mt-3 text-slate-200">
-              {analytics?.avg_mood ? `${analytics.avg_mood.toFixed(1)}/10` : "7.2/10"}
+              {hasLogs && analytics?.avg_mood !== null && analytics?.avg_mood !== undefined ? `${analytics.avg_mood.toFixed(1)}/10` : "Nill"}
             </div>
           </div>
           <div className="text-xs text-slate-500">
@@ -189,8 +261,8 @@ export default function Dashboard() {
               <span>Distress Level</span>
               <ShieldAlert className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className={`text-4xl font-extrabold tracking-tight mt-3 ${crisisLevel > 2 ? 'text-rose-400 text-glow-rose' : 'text-slate-200'}`}>
-              Level {crisisLevel}
+            <div className={`text-4xl font-extrabold tracking-tight mt-3 ${hasLogs && crisisLevel > 2 ? 'text-rose-400 text-glow-rose' : 'text-slate-200'}`}>
+              {hasLogs && crisisLevel !== null && crisisLevel !== undefined && crisisLevel > 0 ? `Level ${crisisLevel}` : "Nill"}
             </div>
           </div>
           <div className="text-xs text-slate-500">
@@ -330,6 +402,79 @@ export default function Dashboard() {
               No recommendations generated. Complete onboarding and submit journal entries to populate.
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Manage Sessions & Account Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+        
+        {/* Previous Chat Sessions list */}
+        <div className="lg:col-span-2 glass-panel p-6 rounded-2xl flex flex-col h-[320px]">
+          <h2 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-indigo-400" /> Chat History Sessions
+          </h2>
+          
+          <div className="flex-grow overflow-y-auto pr-1 space-y-3">
+            {sessions.map((session) => (
+              <div 
+                key={session.id} 
+                className="p-4 rounded-xl border border-slate-800 bg-slate-900/30 flex justify-between items-center hover:border-slate-700 transition"
+              >
+                <div>
+                  <div className="font-semibold text-slate-200 text-sm">{session.title}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    Created: {new Date(session.created_at).toLocaleDateString(undefined, {
+                      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeleteSession(session.id)}
+                  disabled={deletingSessionId === session.id}
+                  className="p-2 bg-slate-800 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/25 rounded-lg transition disabled:opacity-40 cursor-pointer"
+                  title="Delete Session"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            {sessions.length === 0 && (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500 italic">
+                No active chat sessions found. Start a conversation in Aarohi Chat to log history.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Account controls & Dashboard Reset */}
+        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between h-[320px]">
+          <div>
+            <h2 className="text-lg font-bold text-slate-200 mb-3 flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-indigo-400" /> Platform Operations
+            </h2>
+            <p className="text-xs text-slate-400 leading-relaxed mb-6">
+              Wipe all compiled metrics, historical journal entries, check-ins, active triggers, and conversational memories to restore your wellness center to its fresh, default state.
+            </p>
+          </div>
+
+          <div className="space-y-3.5">
+            <button
+              onClick={handleResetDashboard}
+              disabled={resetting}
+              className="w-full py-3 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/25 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition disabled:opacity-40"
+            >
+              <RefreshCw className={`w-4 h-4 ${resetting ? 'animate-spin' : ''}`} />
+              {resetting ? "Resetting Logs..." : "Reset Dashboard"}
+            </button>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full py-3 bg-slate-900 border border-slate-800 hover:bg-rose-500/5 hover:border-rose-500/20 text-slate-300 hover:text-rose-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out of Platform
+            </button>
+          </div>
         </div>
       </div>
 

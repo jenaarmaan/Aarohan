@@ -75,11 +75,23 @@ except Exception as e:
         def get(self, *args, **kwargs):
             return self._docs
 
+    class MockBatch:
+        def set(self, ref, data, *args, **kwargs):
+            return self
+        def update(self, ref, data, *args, **kwargs):
+            return self
+        def delete(self, ref, *args, **kwargs):
+            return self
+        def commit(self, *args, **kwargs):
+            return None
+
     class MockFirestoreClient:
         def collection(self, *args, **kwargs):
             return MockQuery()
         def document(self, id=None, *args, **kwargs):
             return MockDocumentReference(id or "mock-doc-id")
+        def batch(self):
+            return MockBatch()
             
     db = MockFirestoreClient()
 

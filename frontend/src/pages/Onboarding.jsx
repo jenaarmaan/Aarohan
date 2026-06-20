@@ -65,7 +65,7 @@ export default function Onboarding() {
         allow_ai_analysis: allowAi,
         allow_data_retention: allowRetention
       });
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       console.error(err);
       setError("Failed to initialize profile. Please check credentials and connection.");

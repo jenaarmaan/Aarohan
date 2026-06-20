@@ -155,3 +155,41 @@ def get_session_messages(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch messages: {e}"
         )
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_chat_session(
+    session_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Deletes a specific chat session and all messages associated with it.
+    """
+    try:
+        # Verify ownership of session first
+        sess_ref = db.collection("chat_sessions").document(session_id)
+        sess = sess_ref.get()
+        if not sess.exists or sess.to_dict().get("user_id") != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Unauthorized access to chat session"
+            )
+            
+        # Delete all messages in the session
+        messages = db.collection("chat_messages").where("session_id", "==", session_id).get()
+        batch = db.batch()
+        for msg in messages:
+            batch.delete(msg.reference)
+        
+        # Delete the session itself
+        batch.delete(sess_ref)
+        batch.commit()
+        
+        return
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting chat session: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete session: {e}"
+        )

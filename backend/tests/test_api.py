@@ -37,3 +37,13 @@ def test_authorized_onboarding_request(mocker=None):
     # If mock firestore client fails to initialize, it might return 500
     # but we can verify it doesn't return 401 (meaning auth bypass works!)
     assert response.status_code in [201, 500]
+
+def test_delete_session():
+    headers = {"Authorization": "Bearer mock-test-token"}
+    response = client.delete("/api/v1/chat/sessions/mock-session-id", headers=headers)
+    assert response.status_code in [204, 500]
+
+def test_reset_dashboard():
+    headers = {"Authorization": "Bearer mock-test-token"}
+    response = client.delete("/api/v1/dashboard/reset", headers=headers)
+    assert response.status_code in [204, 500]

@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
@@ -33,7 +34,7 @@ function NavigationShell({ children }) {
         <div className="space-y-8">
           
           {/* Sidebar logo header */}
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition cursor-pointer">
             <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
               <Sparkles className="w-5 h-5 text-indigo-400" />
             </div>
@@ -41,7 +42,7 @@ function NavigationShell({ children }) {
               <span className="font-extrabold tracking-tight text-slate-100 text-lg block">AAROHAN</span>
               <span className="text-[10px] text-slate-400 block tracking-wider uppercase font-semibold">Intelligence</span>
             </div>
-          </div>
+          </Link>
 
           <nav className="space-y-1.5">
             {menuItems.map((item) => {
@@ -88,6 +89,9 @@ export default function App() {
     <Router>
       <AuthProvider>
         <Routes>
+          {/* Public Home Page */}
+          <Route path="/" element={<Home />} />
+
           {/* Public Auth Path */}
           <Route path="/login" element={<Login />} />
           
@@ -134,7 +138,7 @@ export default function App() {
           />
 
           {/* Catch-all fallback redirects */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </Router>
