@@ -1,20 +1,9 @@
 import axios from "axios";
 
-// Dynamically determine the backend base path
-// On Vercel production, backend is served under /_/backend prefix
-// Locally (dev), the Vite proxy or direct server uses /api/v1
-const getBaseURL = () => {
-  const host = window.location.hostname;
-  // Vercel deployment: backend routes through /_/backend
-  if (host.includes("vercel.app") || host.includes("vercel")) {
-    return "/_/backend/api/v1";
-  }
-  // Local development
-  return "/api/v1";
-};
-
+// Backend API base path
+// Both Vercel (serverless function) and local dev (Vite proxy) use /api/v1
 const api = axios.create({
-  baseURL: getBaseURL()
+  baseURL: "/api/v1"
 });
 
 // Interceptor to inject Firebase authorization token dynamically
