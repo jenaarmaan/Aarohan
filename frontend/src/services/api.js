@@ -1,11 +1,15 @@
 import axios from "axios";
 
 // Dynamically determine the backend base path
-// Fallback to local sandbox proxy or Vercel routing
+// On Vercel production, backend is served under /_/backend prefix
+// Locally (dev), the Vite proxy or direct server uses /api/v1
 const getBaseURL = () => {
-  if (window.location.pathname.startsWith("/_/backend")) {
+  const host = window.location.hostname;
+  // Vercel deployment: backend routes through /_/backend
+  if (host.includes("vercel.app") || host.includes("vercel")) {
     return "/_/backend/api/v1";
   }
+  // Local development
   return "/api/v1";
 };
 

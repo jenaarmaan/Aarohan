@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { 
   ShieldAlert, Sparkles, TrendingUp, AlertCircle, RefreshCw, 
-  HelpCircle, Compass, HeartHandshake, Eye, CheckCircle2, Trash2, LogOut
+  HelpCircle, Compass, HeartHandshake, Eye, CheckCircle2, Trash2, LogOut, MessageSquare
 } from "lucide-react";
 
 export default function Dashboard() {
