@@ -96,6 +96,14 @@ export default function Dashboard() {
     }
   }
 
+  function getSessionDateString(session) {
+    if (!session?.created_at) return "N/A";
+    const d = new Date(session.created_at);
+    return isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  }
+
   async function handleFeedback(rec, outcomeText) {
     if (!data) return;
     const key = `${rec.title}-${outcomeText}`;
@@ -424,9 +432,7 @@ export default function Dashboard() {
                 <div>
                   <div className="font-semibold text-slate-200 text-sm">{session.title}</div>
                   <div className="text-[10px] text-slate-500 mt-0.5">
-                    Created: {new Date(session.created_at).toLocaleDateString(undefined, {
-                      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    })}
+                    Created: {getSessionDateString(session)}
                   </div>
                 </div>
                 <button
