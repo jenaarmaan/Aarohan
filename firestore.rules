@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper to check if user is signed in via Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper to verify if document ID matches authenticated user's UID
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Helper to check if user_id field inside document data matches authenticated user's UID
+    function matchesOwnerField(resourceData) {
+      return resourceData != null && resourceData.user_id == request.auth.uid;
+    }
+
+    // 1. Users collection (keyed by auth UID)
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // 2. Personas collection (keyed by auth UID)
+    match /personas/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // 3. Journal Entries collection (random ID, carries user_id field)
+    match /journal_entries/{entryId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 4. Mood Entries collection (random ID, carries user_id field)
+    match /mood_entries/{entryId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 5. Emotion Events collection (random ID, carries user_id field)
+    match /emotion_events/{eventId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 6. Trigger Events collection (random ID, carries user_id field)
+    match /trigger_events/{eventId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 7. Burnout Scores collection (random ID, carries user_id field)
+    match /burnout_scores/{scoreId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 8. Outcome Events collection (random ID, carries user_id field)
+    match /outcome_events/{eventId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 9. Wellness Memory collection (random ID, carries user_id field)
+    match /wellness_memory/{memoryId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 10. User Analytics Cache collection (keyed by auth UID)
+    match /user_analytics/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // 11. Chat Sessions collection (random ID, carries user_id field)
+    match /chat_sessions/{sessionId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 12. Chat Messages collection (random ID, carries user_id field)
+    match /chat_messages/{messageId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 13. Audit Logs collection (random ID, carries user_id field)
+    match /audit_logs/{logId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+    
+    // 14. Notifications collection (random ID, carries user_id field)
+    match /notifications/{notificationId} {
+      allow read, update, delete: if isAuthenticated() && matchesOwnerField(resource.data);
+      allow create: if isAuthenticated() && matchesOwnerField(request.resource.data);
+    }
+  }
+}
