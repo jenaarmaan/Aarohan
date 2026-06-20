@@ -42,11 +42,14 @@ DEFAULT_INTERVENTIONS = [
     }
 ]
 
-def generate_personalized_recommendations(user_id: str, current_brs: float, top_triggers: list[dict]) -> list[dict]:
+def generate_personalized_recommendations(user_id: str, current_brs: float | None, top_triggers: list[dict]) -> list[dict]:
     """
     Generates dynamic interventions based on user's current BRS risk and active triggers.
     Prioritizes items found in the user's wellness_memory with high effectiveness.
     """
+    if current_brs is None:
+        current_brs = 0.0
+        
     try:
         recommendations = []
         

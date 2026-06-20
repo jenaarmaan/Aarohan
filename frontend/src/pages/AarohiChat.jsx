@@ -31,30 +31,45 @@ export default function AarohiChat() {
   async function fetchSessions() {
     try {
       const res = await api.get("/chat/sessions");
-      setSessions(res.data);
-      if (res.data.length > 0) {
-        setCurrentSessionId(res.data[0].id);
+      if (res.data && Array.isArray(res.data)) {
+        setSessions(res.data);
+        if (res.data.length > 0) {
+          setCurrentSessionId(res.data[0].id);
+        }
+      } else {
+        setSessions([]);
       }
     } catch (err) {
       console.error("Failed to fetch chat sessions:", err);
+      setSessions([]);
     }
   }
 
   async function fetchDashboardContext() {
     try {
       const res = await api.get("/dashboard");
-      setSidebarContext(res.data.analytics);
+      if (res.data && res.data.analytics) {
+        setSidebarContext(res.data.analytics);
+      } else {
+        setSidebarContext(null);
+      }
     } catch (err) {
       console.error("Failed to fetch dashboard context:", err);
+      setSidebarContext(null);
     }
   }
 
   async function fetchMessages(sessionId) {
     try {
       const res = await api.get(`/chat/sessions/${sessionId}/messages`);
-      setMessages(res.data);
+      if (res.data && Array.isArray(res.data)) {
+        setMessages(res.data);
+      } else {
+        setMessages([]);
+      }
     } catch (err) {
       console.error("Failed to fetch messages:", err);
+      setMessages([]);
       setError("Unauthorized access or failed to fetch message history.");
     }
   }
@@ -125,7 +140,7 @@ export default function AarohiChat() {
           </div>
           
           <div className="space-y-2 overflow-y-auto flex-grow pr-1">
-            {sessions.map((sess) => (
+            {Array.isArray(sessions) && sessions.map((sess) => (
               <button
                 key={sess.id}
                 onClick={() => setCurrentSessionId(sess.id)}
@@ -138,7 +153,7 @@ export default function AarohiChat() {
                 {sess.title}
               </button>
             ))}
-            {sessions.length === 0 && (
+            {(!Array.isArray(sessions) || sessions.length === 0) && (
               <div className="text-center text-xs text-slate-500 italic py-10">No sessions recorded yet.</div>
             )}
           </div>
@@ -154,7 +169,9 @@ export default function AarohiChat() {
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
                 <span>Burnout Probability</span>
                 <span className={`font-semibold text-glow-indigo text-slate-200`}>
-                  {sidebarContext.current_burnout_score}%
+                  {sidebarContext.current_burnout_score !== null && sidebarContext.current_burnout_score !== undefined
+                    ? `${sidebarContext.current_burnout_score}%`
+                    : "Nill"}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
@@ -162,18 +179,20 @@ export default function AarohiChat() {
                 <span className={`font-semibold ${
                   crisisLevel === 4 ? "text-rose-400 text-glow-rose" : crisisLevel === 3 ? "text-orange-400" : "text-emerald-400"
                 }`}>
-                  Level {crisisLevel}
+                  {sidebarContext.current_crisis_level !== null && sidebarContext.current_crisis_level !== undefined && sidebarContext.current_crisis_level > 0
+                    ? `Level ${crisisLevel}`
+                    : "Nill"}
                 </span>
               </div>
               <div>
                 <span className="block mb-1">Top Active Triggers</span>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {sidebarContext.top_triggers?.map((t, idx) => (
+                  {Array.isArray(sidebarContext.top_triggers) && sidebarContext.top_triggers.map((t, idx) => (
                     <span key={idx} className="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[10px] text-indigo-300 font-medium">
                       {t.trigger}
                     </span>
                   ))}
-                  {(!sidebarContext.top_triggers || sidebarContext.top_triggers.length === 0) && (
+                  {(!Array.isArray(sidebarContext.top_triggers) || sidebarContext.top_triggers.length === 0) && (
                     <span className="text-[10px] text-slate-500 italic">None logged.</span>
                   )}
                 </div>
@@ -251,7 +270,7 @@ export default function AarohiChat() {
             </div>
           )}
 
-          {messages.map((msg, index) => {
+          {Array.isArray(messages) && messages.map((msg, index) => {
             const isUser = msg.sender === "user";
             return (
               <div
