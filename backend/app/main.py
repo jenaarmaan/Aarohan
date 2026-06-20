@@ -35,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API Routers
+# Register API Routers (Standard)
 api_prefix = settings.API_V1_STR
 app.include_router(onboarding.router, prefix=api_prefix)
 app.include_router(journals.router, prefix=api_prefix)
@@ -43,6 +43,15 @@ app.include_router(mood.router, prefix=api_prefix)
 app.include_router(chat.router, prefix=api_prefix)
 app.include_router(dashboard.router, prefix=api_prefix)
 app.include_router(interventions.router, prefix=api_prefix)
+
+# Register API Routers (Sandbox /_/backend prefix fallback)
+sandbox_prefix = f"/_/backend{api_prefix}"
+app.include_router(onboarding.router, prefix=sandbox_prefix)
+app.include_router(journals.router, prefix=sandbox_prefix)
+app.include_router(mood.router, prefix=sandbox_prefix)
+app.include_router(chat.router, prefix=sandbox_prefix)
+app.include_router(dashboard.router, prefix=sandbox_prefix)
+app.include_router(interventions.router, prefix=sandbox_prefix)
 
 @app.get("/health", tags=["System"])
 def health_check():

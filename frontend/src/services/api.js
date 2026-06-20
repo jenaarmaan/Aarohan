@@ -1,8 +1,16 @@
 import axios from "axios";
 
-// Axios instance proxied to FastAPI backend
+// Dynamically determine the backend base path
+// Fallback to local sandbox proxy or Vercel routing
+const getBaseURL = () => {
+  if (window.location.pathname.startsWith("/_/backend")) {
+    return "/_/backend/api/v1";
+  }
+  return "/api/v1";
+};
+
 const api = axios.create({
-  baseURL: "/api/v1"
+  baseURL: getBaseURL()
 });
 
 // Interceptor to inject Firebase authorization token dynamically
