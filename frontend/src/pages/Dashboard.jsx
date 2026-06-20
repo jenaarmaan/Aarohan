@@ -149,9 +149,10 @@ export default function Dashboard() {
     );
   }
 
-  const { analytics, recommendations } = data;
+  const analytics = data?.analytics;
+  const recommendations = data?.recommendations;
   const crisisLevel = analytics?.current_crisis_level || 0;
-  const hasLogs = analytics?.recent_timeline && analytics.recent_timeline.length > 0;
+  const hasLogs = analytics?.recent_timeline && Array.isArray(analytics.recent_timeline) && analytics.recent_timeline.length > 0;
 
   // Visual helper for BRS score styling
   const brs = analytics?.current_burnout_score || 0;
