@@ -137,7 +137,7 @@ def calculate_burnout_risk(
     # 5. Engagement Drop (0-100)
     # Log frequency decline in past 7 days vs past 30 days baseline
     engagement_drop = 0.0  # Default no drop
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     
     # helper to get timestamps from entries
     def get_time(x):

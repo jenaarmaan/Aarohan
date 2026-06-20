@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from app.core.firebase import db
 from app.services.scoring_engine import calculate_stress_score, calculate_burnout_risk
 
@@ -22,7 +22,7 @@ def log_emotion_event(user_id: str, event: str, emotion: str, behavior: str) -> 
             .get()
         )
         
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc).replace(tzinfo=None)
         
         if query:
             doc = query[0]
@@ -76,7 +76,7 @@ def log_outcome_event(
             "intervention": intervention,
             "outcome": outcome,
             "confidence": round(confidence, 2),
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc).replace(tzinfo=None)
         }
         outcome_ref.set(data)
         logger.info(f"Logged outcome event for {user_id}: {intervention} -> {outcome}")
@@ -129,7 +129,7 @@ def update_wellness_memory(user_id: str, trigger: str, intervention: str, outcom
             doc.reference.update({
                 "effectiveness": round(new_effect, 2),
                 "successful_interventions": successful_interventions,
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
             })
         else:
             # Create new memory
@@ -140,7 +140,7 @@ def update_wellness_memory(user_id: str, trigger: str, intervention: str, outcom
                 "trigger": trigger,
                 "successful_interventions": success_list,
                 "effectiveness": max(0.0, min(1.0, 0.5 + effect_delta)),
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
             })
     except Exception as e:
         logger.error(f"Error updating wellness memory: {e}")
@@ -184,7 +184,7 @@ def update_trigger_evolution(user_id: str, detected_events: list[dict]):
                     "trend": trend,
                     "risk_level": risk_level,
                     "confidence": 0.9,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
                 })
             else:
                 # New trigger
@@ -198,7 +198,7 @@ def update_trigger_evolution(user_id: str, detected_events: list[dict]):
                     "trend": "Stable",
                     "confidence": 0.7,
                     "risk_level": "Low",
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
                 })
     except Exception as e:
         logger.error(f"Error updating trigger evolution: {e}")
@@ -253,7 +253,7 @@ def compile_user_analytics(user_id: str) -> dict:
                 
         # 4. Generate 30-Day Timeline items
         timeline = []
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         
         # We parse days from 30 days ago to now
         for i in range(30):
@@ -287,7 +287,7 @@ def compile_user_analytics(user_id: str) -> dict:
             "current_crisis_level": crisis_level,
             "top_triggers": top_triggers_mapped,
             "recent_timeline": timeline[::-1], # Chronological order
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
         }
         
         db.collection("user_analytics").document(user_id).set(analytics_data)
