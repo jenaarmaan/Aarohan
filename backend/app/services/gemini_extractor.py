@@ -11,8 +11,8 @@ if settings.GEMINI_API_KEY:
 else:
     logger.warning("GEMINI_API_KEY is not set in configuration.")
 
-# We use gemini-1.5-flash as the primary stable multimodal model
-MODEL_NAME = "gemini-1.5-flash"
+# We use gemini-2.5-flash as the primary stable multimodal model
+MODEL_NAME = "gemini-2.5-flash"
 
 SYSTEM_EXTRACTION_PROMPT = """
 You are the Emotional Intelligence parsing engine for AAROHAN, a Universal Mental Wellness Platform.

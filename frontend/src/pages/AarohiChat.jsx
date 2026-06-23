@@ -117,7 +117,7 @@ export default function AarohiChat() {
   }
 
   // Check crisis levels
-  const crisisLevel = sidebarContext?.current_crisis_level || 1;
+  const crisisLevel = sidebarContext?.current_crisis_level ?? 1;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 h-[calc(100vh-100px)] flex flex-col md:flex-row gap-6">
